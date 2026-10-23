@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}校園日曆｜課拼{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>校園日曆</h1><p>校園活動、選課與學期重要日期{% if role == 'student' %}，還有你的待辦期限{% endif %}</p></div>
+  <div class="month-nav">
+    <a class="btn btn-outline btn-sm" href="?m={{ prev }}">上個月</a>
+    <strong>{{ title }}</strong>
+    <a class="btn btn-outline btn-sm" href="?m={{ next }}">下個月</a>
+    <a class="btn btn-ghost btn-sm" href="?m={{ this_month }}">回到本月</a>
+  </div>
+</div>
+<div class="legend"><span class="lg event">校園活動</span><span class="lg milestone">學期與選課日期</span>{% if role == 'student' %}<span class="lg todo">我的待辦</span>{% endif %}</div>
+
+<div class="grid-scroll">
+<table class="cal">
+  <thead><tr>{% for h in heads %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>
+    {% for week in rows %}
+    <tr>
+      {% for c in week %}
+      <td class="{% if not c.in_month %}off{% endif %} {% if c.is_today %}today{% endif %}">
+        <span class="d">{{ c.date.day }}</span>
+        {% for it in c.items|slice:":3" %}
+          <a class="it {{ it.kind }}" href="{{ it.url }}">{% if it.time %}<i>{{ it.time }}</i>{% endif %}{{ it.title }}</a>
+        {% endfor %}
+        {% if c.items|length > 3 %}<small class="more">還有 {{ c.items|length|add:"-3" }} 項</small>{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

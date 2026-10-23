@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}我的開課｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>我的開課</h1><p>點選課程進入大綱、公告、候補名單與修課名單</p></div>
+{% if sections %}{% include "_rows_head.html" %}{% endif %}
+<div class="rows">
+  {% for s in sections %}
+  <article class="row">
+    <div class="c-course">
+      <a class="name" href="{% url 'teacher_section' s.pk %}">{{ s.course.name }}</a>
+      <span class="sub">{{ s.course.code }}　{{ s.semester.name }}</span>
+    </div>
+    <div class="c-teacher">{{ s.classroom }}</div>
+    <div class="c-credit">{{ s.course.credits }} 學分</div>
+    <div class="c-time">{% for t in s.times.all %}<span class="slot">{{ t.label }}</span>{% endfor %}</div>
+    <div class="c-seats {% if s.is_full %}is-full{% endif %}">{{ s.seats_taken }} / {{ s.capacity }}</div>
+    <div class="c-act"><div class="acts"><a class="btn btn-primary btn-sm" href="{% url 'teacher_section' s.pk %}">管理課程</a></div></div>
+  </article>
+  {% empty %}<p class="empty">目前沒有指派給你的課。請教務處在後台指派。</p>{% endfor %}
+</div>
+{% endblock %}

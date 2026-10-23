@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}智慧排課｜課拼{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>智慧排課</h1>
+  <p>設定想修的學分與空堂需求，系統會在不衝堂的前提下產生方案。你已加選的 {{ credits_now }} 學分會保留。</p>
+</div>
+
+<form method="get" class="planner-form panel">
+  <label>目標總學分
+    <select name="credits">
+      {% for c in credit_choices %}<option value="{{ c }}" {% if c == target %}selected{% endif %}>{{ c }} 學分</option>{% endfor %}
+    </select>
+  </label>
+  <label>整天不想上課
+    <select name="avoid">
+      <option value="">不限</option>
+      {% for id, name in weekdays %}<option value="{{ id }}" {% if avoid == id|stringformat:"s" %}selected{% endif %}>{{ name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="check"><input type="checkbox" name="no_early" {% if no_early %}checked{% endif %}>不要早八（第 1 節）</label>
+  <label class="check"><input type="checkbox" name="no_lunch" {% if no_lunch %}checked{% endif %}>中午要吃飯（第 5 節）</label>
+  <button class="btn btn-primary" type="submit">產生方案</button>
+</form>
+
+{% if already_enough %}
+  <p class="notice">你目前已有 {{ credits_now }} 學分，已達或超過目標 {{ target }} 學分。調高目標學分後再試一次。</p>
+{% elif not plans %}
+  <p class="notice">在這些條件下找不到可以加選的組合。放寬空堂需求，或調整目標學分再試一次。</p>
+{% endif %}
+
+{% for p in plans %}
+<section class="plan">
+  <header class="plan-head">
+    <div>
+      <h2>方案 {{ forloop.counter }}　{{ p.name }}</h2>
+      <p>新增 {{ p.sections|length }} 門、{{ p.added_credits }} 學分，總共 {{ p.total_credits }} 學分，每週到校 {{ p.days }} 天，保證沒有衝堂</p>
+    </div>
+    <form method="post" action="{% url 'enroll_many' %}">
+      {% csrf_token %}
+      {% for sid in p.ids %}<input type="hidden" name="section_ids" value="{{ sid }}">{% endfor %}
+      <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+      <button class="btn btn-solid" type="submit">一鍵套用此方案</button>
+    </form>
+  </header>
+  <div class="plan-body">
+    {% include "_grid.html" with rows=p.rows compact=True %}
+    <ul class="plan-list">
+      {% for s in p.sections %}
+      <li>
+        <a href="{% url 'course_detail' s.course.pk %}">{{ s.course.name }}</a>
+        <span class="sub">{{ s.teacher_name }}　{{ s.course.credits }} 學分　{{ s.course.get_category_display }}</span>
+        <span class="sub">{% for t in s.times.all %}{{ t.label }}{% if not forloop.last %}、{% endif %}{% endfor %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

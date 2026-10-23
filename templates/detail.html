@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ course.name }}｜課拼{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="目前位置"><a href="{% url 'home' %}">首頁</a> / <a href="{% url 'course_list' %}">課程查詢</a> / {{ course.name }}</nav>
+<div class="page-head">
+  <h1>{{ course.name }}</h1>
+  <p>{{ course.code }}　{{ course.department.name }}　{{ course.get_category_display }}　{{ course.credits }} 學分
+    {% if review_count %}　<span class="stars-inline">{{ review_avg_stars }}</span> {{ review_avg }}（{{ review_count }} 則心得）{% endif %}</p>
+</div>
+
+{% if sections %}{% include "_rows_head.html" %}{% endif %}
+<div class="rows">
+  {% for s in sections %}{% include "_section.html" %}
+  {% empty %}<p class="empty">這門課本學期沒有開課。</p>{% endfor %}
+</div>
+
+<div class="detail-layout">
+  <div class="detail-main">
+    <section class="panel">
+      <h2 class="ico-piece">課程簡介</h2>
+      {% if course.description %}{{ course.description|linebreaks }}{% else %}<p class="empty">尚無簡介。</p>{% endif %}
+      {% if objectives %}
+        <h3>你會學到</h3>
+        <ul class="check-list">{% for o in objectives %}<li>{{ o }}</li>{% endfor %}</ul>
+      {% endif %}
+      <div class="two-facts">
+        <div><h3>評量方式</h3><p>{{ course.grading|default:"老師尚未公布。" }}</p></div>
+        <div><h3>教材與參考書</h3><p>{{ course.textbook|default:"老師尚未公布。" }}</p></div>
+      </div>
+    </section>
+
+    {% for s in sections %}
+    <section class="panel">
+      {% if s.announcement %}<div class="notice"><strong>老師公告</strong>{{ s.announcement|linebreaksbr }}</div>{% endif %}
+      <h2 class="ico-piece">每週進度　<small>授課老師 {{ s.teacher_name }}</small></h2>
+      {% if s.outline %}
+        <ol class="outline">{% for line in s.outline.splitlines %}<li>{{ line }}</li>{% endfor %}</ol>
+      {% else %}<p class="empty">老師還沒有上傳進度大綱。</p>{% endif %}
+    </section>
+    {% endfor %}
+
+    <section class="panel" id="reviews">
+      <h2 class="ico-piece">修課心得</h2>
+      {% if review_count %}
+        <p class="review-sum"><span class="stars-big">{{ review_avg_stars }}</span> <b>{{ review_avg }}</b> 分，共 {{ review_count }} 則心得</p>
+      {% endif %}
+      {% for r in reviews %}
+        <article class="review">
+          <div class="review-top"><span class="stars-inline">{{ r.stars }}</span><b>{{ r.who }}</b><time>{{ r.created_at|date:"Y/m/d" }}</time></div>
+          {% if r.comment %}<p>{{ r.comment }}</p>{% endif %}
+        </article>
+      {% empty %}<p class="empty">還沒有人留下心得。</p>{% endfor %}
+
+      {% if role == 'student' %}
+        {% if can_review %}
+        <form method="post" action="{% url 'review' course.pk %}" class="stack review-form">
+          {% csrf_token %}
+          <h3>{% if my_review %}修改我的心得{% else %}留下我的心得{% endif %}</h3>
+          <label>{{ review_form.rating.label }}{{ review_form.rating }}</label>
+          <label>{{ review_form.comment.label }}{{ review_form.comment }}</label>
+          <div><button class="btn btn-primary" type="submit">送出心得</button></div>
+        </form>
+        {% else %}
+          <p class="hint">加選過這門課之後，就可以在這裡留下心得。</p>
+        {% endif %}
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    <section class="panel">
+      <h2>同學也選了</h2>
+      {% for a in also_took %}
+        <a class="side-link" href="{% url 'course_detail' a.section__course_id %}">{{ a.section__course__name }}<small>{{ a.n }} 人</small></a>
+      {% empty %}<p class="empty">還沒有足夠的選課資料。</p>{% endfor %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

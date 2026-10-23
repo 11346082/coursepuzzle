@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}校園活動｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>校園活動</h1><p>講座、社團、徵才與服務學習，登入後可以直接報名，報名結果會出現在通知中心</p></div>
+<div class="pills" role="navigation" aria-label="活動分類">
+  <a href="{% url 'events' %}" {% if not cat and not mine %}class="on"{% endif %}>全部</a>
+  {% for key, name in categories %}<a href="?cat={{ key }}" {% if cat == key %}class="on"{% endif %}>{{ name }}</a>{% endfor %}
+  {% if role == 'student' %}<a href="?mine=1" {% if mine %}class="on"{% endif %}>我報名的</a>{% endif %}
+</div>
+
+<div class="events">
+  {% for e in items %}
+  <article class="event" id="e{{ e.pk }}">
+    <b class="datebox big"><i>{{ e.start|date:"n月" }}</i>{{ e.start|date:"j" }}<small>{{ e.start|date:"D" }}</small></b>
+    <div class="event-main">
+      <h3>{{ e.title }} <span class="cat cat-ev-{{ e.category }}">{{ e.get_category_display }}</span></h3>
+      <p class="meta">{{ e.start|date:"H:i" }}{% if e.end %} 到 {{ e.end|date:"H:i" }}{% endif %}　{{ e.location|default:"地點待公布" }}　主辦：{{ e.organizer|default:"校方" }}</p>
+      {% if e.description %}<p>{{ e.description }}</p>{% endif %}
+      <p class="seats {% if e.is_full %}is-full{% endif %}">
+        {% if e.capacity %}已報名 {{ e.signup_count }} / {{ e.capacity }} 人{% if e.is_full %}，名額已滿{% endif %}{% else %}不限名額，已有 {{ e.signup_count }} 人報名{% endif %}
+      </p>
+    </div>
+    <div class="event-act">
+      {% if role == 'student' %}
+      <form method="post" action="{% url 'event_signup' e.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}#e{{ e.pk }}">
+        {% if e.signed %}<button class="btn btn-outline" type="submit">取消報名</button>
+        {% elif e.is_full %}<button class="btn is-disabled" type="button" disabled>額滿</button>
+        {% else %}<button class="btn btn-primary" type="submit">我要報名</button>{% endif %}
+      </form>
+      {% elif not user.is_authenticated %}
+        <a class="btn btn-outline" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">登入後報名</a>
+      {% endif %}
+    </div>
+  </article>
+  {% empty %}<p class="empty">這個條件下沒有即將舉行的活動。</p>{% endfor %}
+</div>
+{% endblock %}

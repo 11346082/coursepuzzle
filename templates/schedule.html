@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}我的課表｜課拼{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div><h1>我的課表</h1><p>{{ semester.name }} 學期</p></div>
+  <a class="btn btn-outline" href="{% url 'schedule_ics' %}">匯出到日曆（.ics）</a>
+</div>
+
+<div class="summary">
+  <div class="sum-item wide">
+    <span>學分進度</span>
+    <strong>{{ credits }} / {{ credit_limit }}</strong>
+    <div class="meter"><span style="width: {{ credit_pct }}%"></span></div>
+    {% if breakdown %}<div class="chips">{% for label, n in breakdown %}<span class="slot">{{ label }} {{ n }}</span>{% endfor %}</div>{% endif %}
+  </div>
+  <div class="sum-item"><span>已加選</span><strong>{{ enrolled|length }} 門</strong></div>
+  <div class="sum-item"><span>每週到校</span><strong>{{ school_days }} 天</strong></div>
+  <div class="sum-item"><span>單日最多</span><strong>{{ max_daily }} 節</strong></div>
+</div>
+
+{% if preview %}
+<section class="preview-card {{ preview_state }}">
+  <div>
+    <strong>預覽：{{ preview.course.name }}</strong>
+    <span class="sub">{% for t in preview.times.all %}{{ t.label }}{% if not forloop.last %}、{% endif %}{% endfor %}</span>
+    <p class="row-note {{ preview_state }}">{% if preview_state == 'available' %}放進去不會衝堂，可以加選。{% else %}{{ preview_reason }}{% endif %}</p>
+  </div>
+  <div class="acts">
+    {% if preview_state == 'available' %}
+      <form method="post" action="{% url 'enroll' preview.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+        <button class="btn btn-primary" type="submit">確認加選</button>
+      </form>
+    {% elif preview_state == 'full' %}
+      <form method="post" action="{% url 'waitlist' preview.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+        <button class="btn btn-gold" type="submit">加入候補</button>
+      </form>
+    {% endif %}
+    <a class="btn btn-outline" href="{% url 'my_schedule' %}">取消預覽</a>
+  </div>
+</section>
+{% endif %}
+
+{% include "_grid.html" with rows=rows compact=False %}
+
+{% if waiting %}
+<h2 class="sec-title">候補中</h2>
+<div class="rows">
+  {% for s in waiting %}
+  <article class="row waitlisted">
+    <div class="c-course"><a class="name" href="{% url 'course_detail' s.course.pk %}">{{ s.course.name }}</a><span class="sub">{{ s.course.code }}</span></div>
+    <div class="c-teacher">{{ s.teacher_name }}</div><div class="c-credit">{{ s.course.credits }} 學分</div>
+    <div class="c-time">{% for t in s.times.all %}<span class="slot">{{ t.label }}</span>{% endfor %}</div><div class="c-seats"></div>
+    <div class="c-act"><span class="badge waitlisted">候補中</span>
+      <div class="acts"><form method="post" action="{% url 'waitlist' s.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+        <button class="btn btn-outline btn-sm" type="submit">取消候補</button></form></div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="sec-title">已加選的課</h2>
+{% if enrolled %}{% include "_rows_head.html" %}{% endif %}
+<div class="rows">
+  {% for s in enrolled %}
+  <article class="row enrolled">
+    <div class="c-course">
+      <a class="name" href="{% url 'course_detail' s.course.pk %}">{{ s.course.name }}</a>
+      <span class="sub">{{ s.course.code }}　{{ s.course.get_category_display }}</span>
+    </div>
+    <div class="c-teacher">{{ s.teacher_name }}<span class="sub">{{ s.classroom }}</span></div>
+    <div class="c-credit">{{ s.course.credits }} 學分</div>
+    <div class="c-time">{% for t in s.times.all %}<span class="slot">{{ t.label }}</span>{% endfor %}</div>
+    <div class="c-seats"></div>
+    <div class="c-act">
+      <span class="badge enrolled">已加選</span>
+      <div class="acts">
+        <form method="post" action="{% url 'drop' s.pk %}" onsubmit="return confirm('確定要退選「{{ s.course.name }}」嗎？');">{% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+          <button class="btn btn-danger btn-sm" type="submit">退選</button>
+        </form>
+      </div>
+    </div>
+  </article>
+  {% empty %}
+  <p class="empty">課表還是空的。到<a href="{% url 'course_list' %}">課程查詢</a>挑第一門課，或用<a href="{% url 'planner' %}">智慧排課</a>一次排好。</p>
+  {% endfor %}
+</div>
+{% endblock %}

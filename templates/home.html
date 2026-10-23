@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}課拼 CoursePuzzle｜選課、校園、生活，一次拼好{% endblock %}
+{% block body %}
+
+<section class="hero">
+  <div class="container hero-in">
+    <div class="hero-copy">
+      <h1>把課，<br>一片片拼對。</h1>
+      <p class="lead">課拼把選課、校園公告、活動報名和每天的待辦放在同一個地方。加選之前先預覽，衝堂、額滿、學分超額，都會先告訴你原因。</p>
+      <form class="hero-search" action="{% url 'course_list' %}" method="get" role="search">
+        <input type="search" name="q" placeholder="輸入課名、課號或老師姓名" aria-label="搜尋課程">
+        <button class="btn btn-primary" type="submit">搜尋課程</button>
+      </form>
+      <div class="hero-cta">
+        <a class="btn btn-solid" href="{% url 'planner' %}">一鍵智慧排課</a>
+        <a class="btn btn-ghost" href="{% url 'events' %}">看看最近的校園活動</a>
+      </div>
+    </div>
+
+    <div class="hero-art" role="img" aria-label="一組彼此咬合的拼圖，代表不衝堂的課表；右下角一片放不進去的虛線拼圖代表被攔下的衝堂課程">
+      <svg viewBox="0 0 400 260">
+        <g class="p" style="--i:0"><use href="#piece" x="14" y="14" width="110" height="110" fill="#E4694A"/><text x="69" y="76">程式設計</text></g>
+        <g class="p" style="--i:1"><use href="#piece" x="102" y="14" width="110" height="110" fill="#F2B544"/><text class="dark" x="157" y="76">管理學</text></g>
+        <g class="p" style="--i:2"><use href="#piece" x="190" y="14" width="110" height="110" fill="#6FA487"/><text x="245" y="76">會計學</text></g>
+        <g class="p" style="--i:3"><use href="#piece" x="14" y="102" width="110" height="110" fill="#7B4B6A"/><text x="69" y="164">財務管理</text></g>
+        <g class="p" style="--i:4"><use href="#piece" x="102" y="102" width="110" height="110" fill="#F08E5A"/><text x="157" y="164">商務英語</text></g>
+        <g class="p" style="--i:5"><use href="#piece" x="190" y="102" width="110" height="110" fill="#E57F90"/><text x="245" y="164">品格領導</text></g>
+        <g class="misfit">
+          <g transform="rotate(10 318 190)">
+            <use href="#piece" x="268" y="140" width="100" height="100" fill="#FFF8F0" stroke="#C23B5A" stroke-width="2.5" stroke-dasharray="6 5"/>
+            <text class="clash" x="318" y="188">衝堂</text>
+            <text class="clash small" x="318" y="207">放不進去</text>
+          </g>
+        </g>
+        <circle cx="378" cy="34" r="7" fill="#F2B544"/><circle cx="28" cy="238" r="8" fill="#E57F90"/>
+        <circle cx="352" cy="108" r="4" fill="#6FA487"/><circle cx="214" cy="244" r="5" fill="#E4694A"/>
+      </svg>
+    </div>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 22 C240 44 480 0 720 20 C960 40 1200 2 1440 22 V40 H0 Z"/></svg>
+</section>
+
+{% if user.is_authenticated and role == 'student' %}
+<section class="today">
+  <div class="container today-in">
+    <article class="card">
+      <h2>今天{{ today_name }}的課</h2>
+      {% if today_classes %}
+        <ul class="plain-list">
+          {% for c in today_classes %}
+          <li><b>{{ c.time }}</b><span>{{ c.section.course.name }}<small>{{ c.section.classroom }}</small></span></li>
+          {% endfor %}
+        </ul>
+      {% elif is_weekend %}
+        <p class="empty">週末愉快，今天沒有課。</p>
+      {% else %}
+        <p class="empty">今天沒有課，去<a href="{% url 'course_list' %}">找找</a>有沒有想補的？</p>
+      {% endif %}
+    </article>
+    <article class="card">
+      <div class="row-between"><h2>待辦事項</h2><a class="textlink" href="{% url 'todos' %}">全部待辦</a></div>
+      {% if my_todos %}
+        <ul class="plain-list">
+          {% for t in my_todos %}<li><span>{{ t.title }}</span>{% if t.due_date %}<small>{{ t.due_date|date:"n/j" }} 前</small>{% endif %}</li>{% endfor %}
+        </ul>
+      {% else %}<p class="empty">目前沒有待辦，輕鬆一下。</p>{% endif %}
+    </article>
+    <article class="card">
+      <h2>學分進度</h2>
+      <p class="big">{{ summary.credits }} <small>/ {{ summary.limit }} 學分</small></p>
+      <div class="meter"><span style="width: {{ summary.pct }}%"></span></div>
+      <p class="muted">已加選 {{ summary.count }} 門課</p>
+      <a class="btn btn-outline btn-sm" href="{% url 'my_schedule' %}">查看我的課表</a>
+    </article>
+  </div>
+</section>
+{% elif not user.is_authenticated %}
+<section class="invite">
+  <div class="container invite-in">
+    <p><strong>用學校信箱登入，開始拼你的課表。</strong>支援 Google 與 Microsoft 帳號，也可以用帳號密碼登入。</p>
+    <a class="btn btn-primary" href="{% url 'login' %}">前往登入</a>
+  </div>
+</section>
+{% endif %}
+
+<section class="stats">
+  <div class="container stats-in">
+    <div><strong>{{ stats.sections }}</strong><span>本學期開課</span></div>
+    <div><strong>{{ stats.teachers }}</strong><span>授課老師</span></div>
+    <div><strong>{{ stats.departments }}</strong><span>開課單位</span></div>
+    <div><strong>{{ stats.events }}</strong><span>即將舉行的活動</span></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="container">
+    <h2 class="band-title ico-piece">全部功能一次看</h2>
+    <p class="band-sub">不只選課，校園裡的大小事也在這裡。點選任何一張卡片就會前往對應頁面。</p>
+    <div class="groups">
+      <div class="group">
+        <h3>選課</h3>
+        <a class="tile" href="{% url 'course_list' %}"><strong>課程查詢</strong><span>依系所、學分、課別與空堂條件篩選，課程簡介、目標與評量方式一應俱全</span></a>
+        <a class="tile" href="{% url 'planner' %}"><strong>智慧排課</strong><span>輸入目標學分，產生三套不衝堂的方案，一鍵套用</span></a>
+        <a class="tile" href="{% url 'my_schedule' %}"><strong>我的課表</strong><span>週課表、學分進度、加選前預覽，並可匯出到 Google 日曆</span></a>
+        <a class="tile" href="{% url 'favorites' %}"><strong>收藏清單</strong><span>先收藏，再一鍵加選全部；額滿的課可加入候補</span></a>
+      </div>
+      <div class="group">
+        <h3>校園</h3>
+        <a class="tile" href="{% url 'news' %}"><strong>校園公告</strong><span>教務、學務、獎助與活動公告，依分類快速找到</span></a>
+        <a class="tile" href="{% url 'events' %}"><strong>校園活動</strong><span>講座、社團、徵才與服務學習，線上報名並收到提醒</span></a>
+        <a class="tile" href="{% url 'calendar' %}"><strong>校園日曆</strong><span>活動、選課日期與你的待辦期限，整個月一眼看完</span></a>
+      </div>
+      <div class="group">
+        <h3>我的</h3>
+        <a class="tile" href="{% url 'todos' %}"><strong>待辦事項</strong><span>作業、報告與考試提醒，逾期會標示出來</span></a>
+        <a class="tile" href="{% url 'notifications' %}"><strong>通知中心</strong><span>加退選結果、候補成功、活動報名都會通知你</span></a>
+        <a class="tile" href="{% url 'profile' %}"><strong>個人資料</strong><span>修改姓名、系所、學號，管理 Google 與 Microsoft 綁定</span></a>
+      </div>
+      <div class="group">
+        <h3>老師與教職員</h3>
+        <a class="tile" href="{% url 'teacher_dashboard' %}"><strong>我的開課</strong><span>編輯大綱與公告、調整名額、查看候補與匯出名單</span></a>
+        <a class="tile" href="{% url 'admin:courses_section_changelist' %}"><strong>開課管理</strong><span>指派老師、教室與時段，調整人數或下架課程</span></a>
+        <a class="tile" href="{% url 'admin:courses_announcement_add' %}"><strong>發布公告</strong><span>新公告會立刻出現在首頁與校園公告</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band tint">
+  <div class="container">
+    <h2 class="band-title ico-piece">選課流程</h2>
+    <ol class="steps">
+      <li><b>1</b><h3>登入</h3><p>用學校信箱登入，或使用帳號密碼。系統依身分顯示對應功能。</p></li>
+      <li><b>2</b><h3>搜尋與預覽</h3><p>找到想修的課，先預覽放進課表之後的樣子。</p></li>
+      <li><b>3</b><h3>加選或候補</h3><p>單門加選、智慧排課一次加選，額滿就加入候補。</p></li>
+      <li><b>4</b><h3>確認與匯出</h3><p>檢查學分與到校天數，匯出到手機日曆就不會忘記上課。</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band">
+  <div class="container two-cols">
+    <div>
+      <div class="row-between"><h2 class="band-title ico-piece">熱門課程</h2><a class="textlink" href="{% url 'course_list' %}">更多課程</a></div>
+      <div class="mini-list">
+        {% for s in popular %}
+        <a class="mini" href="{% url 'course_detail' s.course.pk %}">
+          <strong>{{ s.course.name }}</strong>
+          <span>{{ s.teacher_name }}　{{ s.course.department.name }}</span>
+          <em class="{% if s.is_full %}is-full{% endif %}">{{ s.seats_taken }} / {{ s.capacity }} 人{% if s.is_full %}，額滿{% endif %}</em>
+        </a>
+        {% empty %}<p class="empty">還沒有開課資料。</p>{% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="row-between"><h2 class="band-title ico-piece">近期活動</h2><a class="textlink" href="{% url 'events' %}">全部活動</a></div>
+      <div class="mini-list">
+        {% for e in upcoming %}
+        <a class="mini event" href="{% url 'events' %}#e{{ e.pk }}">
+          <b class="datebox"><i>{{ e.start|date:"n月" }}</i>{{ e.start|date:"j" }}</b>
+          <span><strong>{{ e.title }}</strong><small>{{ e.start|date:"H:i" }}　{{ e.location }}</small></span>
+        </a>
+        {% empty %}<p class="empty">近期沒有活動。</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band tint">
+  <div class="container two-cols wide-left">
+    <div>
+      <div class="row-between"><h2 class="band-title ico-piece">最新公告</h2><a class="textlink" href="{% url 'news' %}">全部公告</a></div>
+      <div class="news">
+        {% for a in announcements %}
+        <details {% if forloop.first %}open{% endif %}>
+          <summary>
+            <time>{{ a.created_at|date:"m/d" }}</time>
+            <span class="cat cat-{{ a.category }}">{{ a.get_category_display }}</span>
+            <span class="t">{{ a.title }}</span>
+            {% if a.is_pinned %}<b class="tag">置頂</b>{% endif %}
+          </summary>
+          <p>{{ a.content|linebreaksbr }}</p>
+        </details>
+        {% empty %}<p class="empty">目前沒有公告。</p>{% endfor %}
+      </div>
+    </div>
+    <aside>
+      <h2 class="band-title ico-piece">選課資訊</h2>
+      {% if semester %}
+      <dl class="facts">
+        <dt>學期</dt><dd>{{ semester.name }}</dd>
+        <dt>目前狀態</dt><dd>{% if is_open %}選課開放中{% else %}{{ open_msg }}{% endif %}</dd>
+        {% if semester.enroll_open %}<dt>開始</dt><dd>{{ semester.enroll_open|date:"Y/m/d H:i" }}</dd>{% endif %}
+        {% if semester.enroll_close %}<dt>截止</dt><dd>{{ semester.enroll_close|date:"Y/m/d H:i" }}</dd>{% endif %}
+        <dt>學分上限</dt><dd>{{ semester.max_credits }} 學分</dd>
+      </dl>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}

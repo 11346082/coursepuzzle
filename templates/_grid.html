@@ -1,0 +1,21 @@
+<div class="grid-scroll {% if compact %}compact{% endif %}">
+<table class="grid">
+  <thead>
+    <tr><th class="corner"></th>{% for n in weekday_names %}<th>{{ n }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr {% if row.period == 5 %}class="lunch"{% endif %}>
+      <th class="period"><b>{{ row.period }}</b><span>{{ row.time }}</span></th>
+      {% for c in row.cells %}
+        {% if c %}
+        <td class="cell {{ c.kind }}{% if c.first %} first{% endif %}">
+          {% if c.kind == 'clash' %}<strong>衝堂</strong>{% elif c.first %}<strong>{{ c.section.course.name }}</strong>{% if not compact %}<span>{{ c.section.classroom }}</span>{% endif %}{% endif %}
+        </td>
+        {% else %}<td class="cell"></td>{% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

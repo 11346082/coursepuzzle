@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}校園公告｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>校園公告</h1><p>教務、學務、獎助與活動消息，置頂的公告會排在最前面</p></div>
+<div class="pills" role="navigation" aria-label="公告分類">
+  <a href="{% url 'news' %}" {% if not cat %}class="on"{% endif %}>全部</a>
+  {% for key, name in categories %}<a href="?cat={{ key }}" {% if cat == key %}class="on"{% endif %}>{{ name }}</a>{% endfor %}
+</div>
+<div class="news big">
+  {% for a in items %}
+  <details {% if forloop.first %}open{% endif %}>
+    <summary>
+      <time>{{ a.created_at|date:"Y/m/d" }}</time>
+      <span class="cat cat-{{ a.category }}">{{ a.get_category_display }}</span>
+      <span class="t">{{ a.title }}</span>
+      {% if a.is_pinned %}<b class="tag">置頂</b>{% endif %}
+    </summary>
+    <p>{{ a.content|linebreaksbr }}</p>
+  </details>
+  {% empty %}<p class="empty">這個分類目前沒有公告。</p>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}收藏清單｜課拼{% endblock %}
+{% block content %}
+<div class="page-head row-between">
+  <div>
+    <h1>收藏清單</h1>
+    <p>共 {{ sections|length }} 門，其中 {{ available|length }} 門目前可以加選</p>
+  </div>
+  {% if available %}
+  <form method="post" action="{% url 'enroll_many' %}" onsubmit="return confirm('要一次加選這 {{ available|length }} 門課嗎？衝堂或額滿的會自動略過。');">
+    {% csrf_token %}
+    {% for s in available %}<input type="hidden" name="section_ids" value="{{ s.pk }}">{% endfor %}
+    <input type="hidden" name="next" value="{% url 'my_schedule' %}">
+    <button class="btn btn-solid" type="submit">一鍵加選可加選的收藏</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if sections %}{% include "_rows_head.html" %}{% endif %}
+<div class="rows">
+  {% for s in sections %}{% include "_section.html" %}
+  {% empty %}<p class="empty">還沒有收藏的課。在課程查詢按「收藏」，之後可以在這裡一次加選。</p>{% endfor %}
+</div>
+{% endblock %}

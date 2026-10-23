@@ -1,0 +1,46 @@
+<article class="row {{ s.state }}">
+  <div class="c-course">
+    <a class="name" href="{% url 'course_detail' s.course.pk %}">{{ s.course.name }}</a>
+    <span class="sub">{{ s.course.code }}　{{ s.course.department.name }}　{{ s.course.get_category_display }}</span>
+  </div>
+  <div class="c-teacher">{{ s.teacher_name }}<span class="sub">{{ s.classroom }}</span></div>
+  <div class="c-credit">{{ s.course.credits }} 學分</div>
+  <div class="c-time">{% for t in s.times.all %}<span class="slot">{{ t.label }}</span>{% endfor %}</div>
+  <div class="c-seats {% if s.is_full %}is-full{% endif %}">{{ s.seats_taken }} / {{ s.capacity }}</div>
+  <div class="c-act">
+    {% if role == 'student' %}
+      <span class="badge {{ s.state }}">{% if s.state == 'available' %}可加選{% elif s.state == 'enrolled' %}已加選{% elif s.state == 'full' %}額滿{% elif s.state == 'waitlisted' %}候補中{% else %}衝堂{% endif %}</span>
+      <div class="acts">
+        {% if s.state == 'available' %}
+          <form method="post" action="{% url 'enroll' s.pk %}">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-primary btn-sm" type="submit">加選</button>
+          </form>
+        {% elif s.state == 'enrolled' %}
+          <form method="post" action="{% url 'drop' s.pk %}" onsubmit="return confirm('確定要退選「{{ s.course.name }}」嗎？');">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-danger btn-sm" type="submit">退選</button>
+          </form>
+        {% elif s.state == 'full' %}
+          <form method="post" action="{% url 'waitlist' s.pk %}">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-gold btn-sm" type="submit">加入候補</button>
+          </form>
+        {% elif s.state == 'waitlisted' %}
+          <form method="post" action="{% url 'waitlist' s.pk %}">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn btn-outline btn-sm" type="submit">取消候補</button>
+          </form>
+        {% endif %}
+        {% if s.state != 'enrolled' %}<a class="textlink" href="{% url 'my_schedule' %}?preview={{ s.pk }}">預覽</a>{% endif %}
+        <form method="post" action="{% url 'favorite' s.pk %}">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="textlink" type="submit">{% if s.is_fav %}取消收藏{% else %}收藏{% endif %}</button>
+        </form>
+      </div>
+    {% elif not user.is_authenticated %}
+      <a class="btn btn-outline btn-sm" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">登入後加選</a>
+    {% endif %}
+  </div>
+  {% if s.reason and s.state != 'enrolled' %}<p class="row-note {{ s.state }}">{{ s.reason }}</p>{% endif %}
+</article>

@@ -1,0 +1,122 @@
+{% load static %}<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}課拼 CoursePuzzle{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="piece" viewBox="0 0 100 100">
+      <path d="M10 10 H40 C40 0 60 0 60 10 H90 V40 C100 40 100 60 90 60 V90 H60 C60 80 40 80 40 90 H10 V60 C20 60 20 40 10 40 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="topline">
+  <div class="container topline-in">
+    <span>
+      {% if semester %}{{ semester.name }} 學期
+        {% with st=semester.enrollment_state %}
+          <b class="pill {% if st.0 %}open{% else %}closed{% endif %}">{% if st.0 %}選課開放中{% else %}{{ st.1 }}{% endif %}</b>
+        {% endwith %}
+        {% if semester.enroll_close %}截止 {{ semester.enroll_close|date:"n月j日 H:i" }}{% endif %}
+      {% else %}尚未設定學期{% endif %}
+    </span>
+    <span>{% if user.is_authenticated %}{{ display_name }}，{% if role == 'student' %}學生{% elif role == 'teacher' %}老師{% else %}教職員{% endif %}{% else %}尚未登入{% endif %}</span>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container header-in">
+    <a class="brand" href="{% url 'home' %}" aria-label="課拼 CoursePuzzle 首頁">
+      <svg class="logo" viewBox="0 0 80 44" aria-hidden="true">
+        <use href="#piece" x="0" y="0" width="44" height="44" fill="var(--coral)"/>
+        <use href="#piece" x="35" y="0" width="44" height="44" fill="var(--marigold)"/>
+      </svg>
+      <span class="brand-text"><strong>課拼</strong><small>CoursePuzzle</small></span>
+    </a>
+    {% with u=request.resolver_match.url_name %}
+    <nav class="nav" aria-label="主選單">
+      <a href="{% url 'home' %}" {% if u == 'home' %}class="on"{% endif %}>首頁</a>
+      <a href="{% url 'course_list' %}" {% if u == 'course_list' or u == 'course_detail' %}class="on"{% endif %}>課程查詢</a>
+      <a href="{% url 'news' %}" {% if u == 'news' %}class="on"{% endif %}>校園公告</a>
+      <a href="{% url 'events' %}" {% if u == 'events' %}class="on"{% endif %}>校園活動</a>
+      <a href="{% url 'calendar' %}" {% if u == 'calendar' %}class="on"{% endif %}>校園日曆</a>
+      {% if role == 'teacher' %}<a href="{% url 'teacher_dashboard' %}" {% if u == 'teacher_dashboard' or u == 'teacher_section' %}class="on"{% endif %}>我的開課</a>{% endif %}
+      {% if role == 'staff' %}<a href="{% url 'admin:index' %}">教務後台</a>{% endif %}
+    </nav>
+    {% endwith %}
+    <div class="account">
+      {% if user.is_authenticated %}
+        <a class="avatar" href="{% url 'profile' %}" title="個人資料">{{ avatar_initial }}</a>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-outline btn-sm" type="submit">登出</button></form>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'login' %}">登入</a>
+      {% endif %}
+    </div>
+  </div>
+  {% if role == 'student' %}
+  {% with u=request.resolver_match.url_name %}
+  <div class="subnav">
+    <div class="container subnav-in" aria-label="我的課拼">
+      <a href="{% url 'planner' %}" {% if u == 'planner' %}class="on"{% endif %}>智慧排課</a>
+      <a href="{% url 'my_schedule' %}" {% if u == 'my_schedule' %}class="on"{% endif %}>我的課表</a>
+      <a href="{% url 'favorites' %}" {% if u == 'favorites' %}class="on"{% endif %}>收藏清單</a>
+      <a href="{% url 'todos' %}" {% if u == 'todos' %}class="on"{% endif %}>待辦事項</a>
+      <a href="{% url 'notifications' %}" {% if u == 'notifications' %}class="on"{% endif %}>通知{% if unread_count %}<b class="count">{{ unread_count }}</b>{% endif %}</a>
+      <a href="{% url 'profile' %}" {% if u == 'profile' %}class="on"{% endif %}>個人資料</a>
+    </div>
+  </div>
+  {% endwith %}
+  {% endif %}
+</header>
+
+{% if messages %}
+<div class="container toasts" role="status">
+  {% for m in messages %}<div class="toast {{ m.tags }}">{{ m }}</div>{% endfor %}
+</div>
+{% endif %}
+
+{% block body %}<main class="container page">{% block content %}{% endblock %}</main>{% endblock %}
+
+<footer class="footer">
+  <div class="container footer-in">
+    <div class="footer-brand">
+      <svg class="logo" viewBox="0 0 80 44" aria-hidden="true">
+        <use href="#piece" x="0" y="0" width="44" height="44" fill="var(--coral)"/>
+        <use href="#piece" x="35" y="0" width="44" height="44" fill="var(--marigold)"/>
+      </svg>
+      <strong>課拼 CoursePuzzle</strong>
+      <p>選課、校園、生活，一次拼好。加選前先預覽，衝堂、額滿與學分超額都會在送出前說明原因。</p>
+    </div>
+    <div>
+      <h4>選課</h4>
+      <a href="{% url 'course_list' %}">課程查詢</a>
+      <a href="{% url 'planner' %}">智慧排課</a>
+      <a href="{% url 'my_schedule' %}">我的課表</a>
+      <a href="{% url 'favorites' %}">收藏清單</a>
+    </div>
+    <div>
+      <h4>校園</h4>
+      <a href="{% url 'news' %}">校園公告</a>
+      <a href="{% url 'events' %}">校園活動</a>
+      <a href="{% url 'calendar' %}">校園日曆</a>
+      <a href="{% url 'todos' %}">待辦事項</a>
+    </div>
+    <div>
+      <h4>教學與管理</h4>
+      <a href="{% url 'teacher_dashboard' %}">我的開課</a>
+      <a href="{% url 'admin:index' %}">教務後台</a>
+    </div>
+  </div>
+  <div class="container footer-base">課拼為課程專案作品。系所架構參考臺北商業大學公開資訊，課程內容、時段、老師與學生皆為虛構的示範資料。</div>
+</footer>
+</body>
+</html>

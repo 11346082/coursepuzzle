@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}通知中心｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>通知中心</h1><p>加退選結果、候補遞補與活動報名都會出現在這裡</p></div>
+<div class="notes">
+  {% for n in items %}
+  <div class="note {% if n.is_new %}new{% endif %}">
+    <time>{{ n.created_at|date:"m/d H:i" }}</time>
+    {% if n.url %}<a href="{{ n.url }}">{{ n.text }}</a>{% else %}<span>{{ n.text }}</span>{% endif %}
+    {% if n.is_new %}<b class="tag">新</b>{% endif %}
+  </div>
+  {% empty %}<p class="empty">目前沒有通知。</p>{% endfor %}
+</div>
+{% endblock %}

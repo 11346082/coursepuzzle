@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}待辦事項｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>待辦事項</h1><p>把作業、報告和考試先記下來，期限會同步顯示在校園日曆上</p></div>
+
+<form method="post" class="todo-form panel">
+  {% csrf_token %}
+  {{ form.title }}{{ form.due_date }}
+  <button class="btn btn-primary" type="submit">新增</button>
+  {{ form.title.errors }}
+</form>
+
+<div class="todos">
+  {% for t in open_items %}
+  <div class="todo {% if t.due_date and t.due_date < today %}overdue{% endif %}">
+    <form method="post" action="{% url 'todo_toggle' t.pk %}">{% csrf_token %}<button class="check-btn" type="submit" aria-label="標記為完成"></button></form>
+    <span class="t">{{ t.title }}</span>
+    {% if t.due_date %}<span class="due">{{ t.due_date|date:"n月j日" }}{% if t.due_date < today %}，已逾期{% endif %}</span>{% endif %}
+    <form method="post" action="{% url 'todo_delete' t.pk %}" onsubmit="return confirm('要刪除這個待辦嗎？');">{% csrf_token %}<button class="textlink" type="submit">刪除</button></form>
+  </div>
+  {% empty %}<p class="empty">沒有待辦事項，今天可以輕鬆一點。</p>{% endfor %}
+</div>
+
+{% if done_items %}
+<h2 class="sec-title">最近完成</h2>
+<div class="todos done">
+  {% for t in done_items %}
+  <div class="todo is-done">
+    <form method="post" action="{% url 'todo_toggle' t.pk %}">{% csrf_token %}<button class="check-btn on" type="submit" aria-label="標記為未完成"></button></form>
+    <span class="t">{{ t.title }}</span>
+    <form method="post" action="{% url 'todo_delete' t.pk %}">{% csrf_token %}<button class="textlink" type="submit">刪除</button></form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

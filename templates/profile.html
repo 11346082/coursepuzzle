@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}個人資料｜課拼{% endblock %}
+{% block content %}
+<div class="page-head"><h1>個人資料</h1><p>身分：{{ profile.get_role_display }}　帳號：{{ user.get_username }}{% if user.email %}　信箱：{{ user.email }}{% endif %}</p></div>
+<div class="detail-layout">
+  <section class="panel">
+    <h2 class="ico-piece">基本資料</h2>
+    <form method="post" class="stack">
+      {% csrf_token %}
+      <div class="two-facts">
+        <label>{{ form.last_name.label }}{{ form.last_name }}</label>
+        <label>{{ form.first_name.label }}{{ form.first_name }}</label>
+      </div>
+      <label>{{ form.department.label }}{{ form.department }}</label>
+      <label>{{ form.student_no.label }}{{ form.student_no }}</label>
+      <div><button class="btn btn-primary" type="submit">儲存</button></div>
+    </form>
+  </section>
+  <aside class="detail-side">
+    <section class="panel">
+      <h2>登入方式</h2>
+      {% for i in identities %}
+        <p class="side-row"><b>{{ i.provider|title }}</b><small>{{ i.email }}</small></p>
+      {% empty %}<p class="empty">還沒有綁定雲端帳號。用 Google 或 Microsoft 登入一次，就會自動綁定。</p>{% endfor %}
+      <p class="hint">{% if has_password %}也可以使用帳號密碼登入。{% else %}此帳號沒有設定密碼，請使用雲端帳號登入。{% endif %}</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}

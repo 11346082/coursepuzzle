@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}無法使用此頁面｜課拼{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>這個頁面只開放給{{ need }}</h1>
+  <p>你目前登入的身分沒有使用權限。請回到首頁，改用對應身分的入口，或登出後換帳號登入。</p>
+  <a class="btn btn-primary" href="{% url 'home' %}">回到首頁</a>
+</section>
+{% endblock %}

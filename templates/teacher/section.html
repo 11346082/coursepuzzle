@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ section.course.name }}｜老師管理{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="目前位置"><a href="{% url 'home' %}">首頁</a> / <a href="{% url 'teacher_dashboard' %}">我的開課</a> / {{ section.course.name }}</nav>
+<div class="page-head"><h1>{{ section.course.name }}</h1><p>{{ section.semester.name }} 學期　已選 {{ section.seats_taken }} / {{ section.capacity }} 人　候補 {{ waiting|length }} 人</p></div>
+
+<section class="panel">
+  <h2 class="ico-piece">課程資料</h2>
+  <p class="hint">調高人數上限時，候補的同學會依登記順序自動加選。</p>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label>每週進度大綱（一行一週）{{ form.outline }}{{ form.outline.errors }}</label>
+    <label>公告{{ form.announcement }}{{ form.announcement.errors }}</label>
+    <label>人數上限{{ form.capacity }}{{ form.capacity.errors }}</label>
+    <div><button class="btn btn-primary" type="submit">儲存</button></div>
+  </form>
+</section>
+
+{% if waiting %}
+<section class="panel">
+  <h2>候補名單（{{ waiting|length }} 人）</h2>
+  <table class="plain">
+    <thead><tr><th>順位</th><th>姓名</th><th>登記時間</th></tr></thead>
+    <tbody>{% for w in waiting %}<tr><td>{{ forloop.counter }}</td><td>{{ w.student.last_name }}{{ w.student.first_name }}</td><td>{{ w.created_at|date:"m/d H:i" }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="row-between">
+    <h2>修課名單（{{ roster|length }} 人）</h2>
+    <a class="btn btn-outline" href="{% url 'teacher_export' section.pk %}">匯出 CSV</a>
+  </div>
+  <table class="plain">
+    <thead><tr><th>學號</th><th>帳號</th><th>姓名</th><th>加選時間</th></tr></thead>
+    <tbody>
+    {% for e in roster %}
+      <tr>
+        <td>{{ e.student.profile.student_no }}</td>
+        <td>{{ e.student.username }}</td>
+        <td>{{ e.student.last_name }}{{ e.student.first_name }}</td>
+        <td>{{ e.created_at|date:"m/d H:i" }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4" class="empty">還沒有學生加選。</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

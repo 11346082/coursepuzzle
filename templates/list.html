@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}課程查詢｜課拼{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>課程查詢</h1>
+  <p>{{ semester.name }} 學期，共 {{ sections|length }} 門課符合條件</p>
+</div>
+
+{% if semester and not semester.enrollment_state.0 %}
+  <p class="notice">{{ semester.enrollment_state.1 }}，目前只能瀏覽課程。</p>
+{% endif %}
+
+<div class="layout">
+  <form method="get" class="filter">
+    <h2>篩選條件</h2>
+    <label>關鍵字<input type="search" name="q" value="{{ q }}" placeholder="課名、課號或老師"></label>
+    <label>開課單位
+      <select name="dept">
+        <option value="">全部</option>
+        {% for d in departments %}<option value="{{ d.pk }}" {% if dept == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>課別
+      <select name="category">
+        <option value="">全部</option>
+        {% for key, name in categories %}<option value="{{ key }}" {% if category == key %}selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>學分
+      <select name="credits">
+        <option value="">不限</option>
+        {% for c in credit_options %}<option value="{{ c }}" {% if credits == c|stringformat:"s" %}selected{% endif %}>{{ c }} 學分</option>{% endfor %}
+      </select>
+    </label>
+    <fieldset>
+      <legend>空堂需求</legend>
+      <label>整天不想上課
+        <select name="avoid">
+          <option value="">不限</option>
+          {% for id, name in weekdays %}<option value="{{ id }}" {% if avoid == id|stringformat:"s" %}selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" name="no_early" {% if no_early %}checked{% endif %}>不要早八（第 1 節）</label>
+      <label class="check"><input type="checkbox" name="no_lunch" {% if no_lunch %}checked{% endif %}>中午要吃飯（第 5 節）</label>
+    </fieldset>
+    <label class="check"><input type="checkbox" name="has_seats" {% if has_seats %}checked{% endif %}>只看還有名額的課</label>
+    <button class="btn btn-primary btn-wide" type="submit">套用篩選</button>
+    <a class="textlink center" href="{% url 'course_list' %}">清除條件</a>
+  </form>
+
+  <div class="results">
+    {% include "_rows_head.html" %}
+    <div class="rows">
+      {% for s in sections %}{% include "_section.html" %}
+      {% empty %}<p class="empty">沒有符合條件的課。試著放寬學分或空堂條件。</p>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
