@@ -71,12 +71,26 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 import dj_database_url
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    )
-}
+import dj_database_url
+
+if os.environ.get("RENDER"):
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("Render 環境缺少 DATABASE_URL，請檢查服務環境變數。")
+    DATABASES = {
+        "default": dj_database_url.parse(
+            database_url,
+            conn_max_age=600,
+        )
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            conn_max_age=600,
+        )
+    }
+
 
 AUTH_PASSWORD_VALIDATORS = []
 
