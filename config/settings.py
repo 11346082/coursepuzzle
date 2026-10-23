@@ -18,9 +18,13 @@ def _load_env_file():
 
 _load_env_file()
 
-SECRET_KEY = "dev-only-change-me"  # 期中 Demo 用，正式上線要換掉
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+DEBUG = "RENDER" not in os.environ
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -41,6 +45,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+"whitenoise.middleware.WhiteNoiseMiddleware",
 
 ROOT_URLCONF = "config.urls"
 
@@ -63,11 +68,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+import dj_database_url
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = []
@@ -79,6 +86,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
