@@ -47,7 +47,15 @@ def is_configured(key):
 
 
 def provider_list():
-    return [{"key": k, "name": v["name"], "configured": is_configured(k)} for k, v in PROVIDERS.items()]
+    keys = ["google"]
+    return [
+        {
+            "key": k,
+            "name": PROVIDERS[k]["name"],
+            "configured": is_configured(k),
+        }
+        for k in keys
+    ]
 
 
 def _url(key, which):
